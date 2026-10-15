@@ -175,10 +175,10 @@ pub fn render(data: &str, args: &Args, limit: usize) -> Result<Document, String>
                 }
                 TagEnd::Link => {
                     styles.pop();
-                    if let Some(url) = links.pop() {
-                        if !args.hyperlinks {
-                            line.extend(plain(&format!(" ({url})")));
-                        }
+                    if let Some(url) = links.pop()
+                        && !args.hyperlinks
+                    {
+                        line.extend(plain(&format!(" ({url})")));
                     }
                 }
                 TagEnd::Image => {
