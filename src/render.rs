@@ -352,8 +352,9 @@ pub fn csv(data: &str, path: &str, args: &Args, limit: usize) -> Result<Document
     } else {
         // Score parsed records rather than raw delimiter counts, so quoted
         // commas inside semicolon- or tab-separated fields do not confuse detection.
-        [b',', b'\t', b';', b'|']
-            .into_iter()
+        b",\t;|"
+            .iter()
+            .copied()
             .enumerate()
             .max_by_key(|(preference, delimiter)| {
                 let mut reader = csv::ReaderBuilder::new()

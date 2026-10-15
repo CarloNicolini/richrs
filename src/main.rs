@@ -322,21 +322,20 @@ fn run(args: Args) -> Result<(), String> {
             .stdin(Stdio::piped())
             .spawn()
             .map_err(|e| format!("unable to start pager '{}': {e}", words[0]))?;
-        if let Some(mut stdin) = child.stdin.take() {
-            if let Err(e) = stdin.write_all(output.as_bytes()) {
-                if e.kind() != io::ErrorKind::BrokenPipe {
-                    return Err(e.to_string());
-                }
-            }
+        if let Some(mut stdin) = child.stdin.take()
+            && let Err(e) = stdin.write_all(output.as_bytes())
+            && e.kind() != io::ErrorKind::BrokenPipe
+        {
+            return Err(e.to_string());
         }
         let status = child.wait().map_err(|e| e.to_string())?;
         if !status.success() {
             return Err(format!("pager exited with {status}"));
         }
-    } else if let Err(e) = io::stdout().lock().write_all(output.as_bytes()) {
-        if e.kind() != io::ErrorKind::BrokenPipe {
-            return Err(e.to_string());
-        }
+    } else if let Err(e) = io::stdout().lock().write_all(output.as_bytes())
+        && e.kind() != io::ErrorKind::BrokenPipe
+    {
+        return Err(e.to_string());
     }
     Ok(())
 }
