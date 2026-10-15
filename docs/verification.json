@@ -1,0 +1,639 @@
+{
+  "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+  "reference": "/private/tmp/richrs-reference/bin/rich",
+  "binary": "/Users/carlo/workspace/richrs/target/release/rich",
+  "reference_version": "1.8.0",
+  "cases": [
+    {
+      "name": "markup",
+      "args": [
+        "-p",
+        "Hello [bold red]world[/]!"
+      ],
+      "input": "",
+      "exact": true,
+      "rust_status": 0,
+      "upstream_status": 0,
+      "diff": "",
+      "rust_stderr": "",
+      "upstream_stderr": ""
+    },
+    {
+      "name": "nested markup",
+      "args": [
+        "-p",
+        "[red]red [b]bold[/b] red[/red]"
+      ],
+      "input": "",
+      "exact": true,
+      "rust_status": 0,
+      "upstream_status": 0,
+      "diff": "",
+      "rust_stderr": "",
+      "upstream_stderr": ""
+    },
+    {
+      "name": "escaped markup",
+      "args": [
+        "-p",
+        "\\[red]"
+      ],
+      "input": "",
+      "exact": true,
+      "rust_status": 0,
+      "upstream_status": 0,
+      "diff": "",
+      "rust_stderr": "",
+      "upstream_stderr": ""
+    },
+    {
+      "name": "emoji",
+      "args": [
+        "-p",
+        ":rocket: :thumbs_up:",
+        "--emoji"
+      ],
+      "input": "",
+      "exact": true,
+      "rust_status": 0,
+      "upstream_status": 0,
+      "diff": "",
+      "rust_stderr": "",
+      "upstream_stderr": ""
+    },
+    {
+      "name": "width wrap",
+      "args": [
+        "-p",
+        "one two three four",
+        "-w",
+        "7"
+      ],
+      "input": "",
+      "exact": true,
+      "rust_status": 0,
+      "upstream_status": 0,
+      "diff": "",
+      "rust_stderr": "",
+      "upstream_stderr": ""
+    },
+    {
+      "name": "right justify",
+      "args": [
+        "-p",
+        "hello",
+        "-w",
+        "12",
+        "-R"
+      ],
+      "input": "",
+      "exact": true,
+      "rust_status": 0,
+      "upstream_status": 0,
+      "diff": "",
+      "rust_stderr": "",
+      "upstream_stderr": ""
+    },
+    {
+      "name": "center justify",
+      "args": [
+        "-p",
+        "hello",
+        "-w",
+        "12",
+        "-C"
+      ],
+      "input": "",
+      "exact": true,
+      "rust_status": 0,
+      "upstream_status": 0,
+      "diff": "",
+      "rust_stderr": "",
+      "upstream_stderr": ""
+    },
+    {
+      "name": "soft wrap",
+      "args": [
+        "-p",
+        "hello world",
+        "-w",
+        "4",
+        "--soft"
+      ],
+      "input": "",
+      "exact": true,
+      "rust_status": 0,
+      "upstream_status": 0,
+      "diff": "",
+      "rust_stderr": "",
+      "upstream_stderr": ""
+    },
+    {
+      "name": "stdin markup",
+      "args": [
+        "-p",
+        "-"
+      ],
+      "input": "[b]hello[/]\n",
+      "exact": true,
+      "rust_status": 0,
+      "upstream_status": 0,
+      "diff": "",
+      "rust_stderr": "",
+      "upstream_stderr": ""
+    },
+    {
+      "name": "rule",
+      "args": [
+        "-u",
+        "Hello",
+        "-w",
+        "30"
+      ],
+      "input": "",
+      "exact": true,
+      "rust_status": 0,
+      "upstream_status": 0,
+      "diff": "",
+      "rust_stderr": "",
+      "upstream_stderr": ""
+    },
+    {
+      "name": "custom rule",
+      "args": [
+        "-u",
+        "Hello",
+        "-w",
+        "30",
+        "--rule-char",
+        "="
+      ],
+      "input": "",
+      "exact": true,
+      "rust_status": 0,
+      "upstream_status": 0,
+      "diff": "",
+      "rust_stderr": "",
+      "upstream_stderr": ""
+    },
+    {
+      "name": "panel rounded",
+      "args": [
+        "-p",
+        "Hello",
+        "-a",
+        "rounded"
+      ],
+      "input": "",
+      "exact": true,
+      "rust_status": 0,
+      "upstream_status": 0,
+      "diff": "",
+      "rust_stderr": "",
+      "upstream_stderr": ""
+    },
+    {
+      "name": "panel square",
+      "args": [
+        "-p",
+        "Hello",
+        "-a",
+        "square"
+      ],
+      "input": "",
+      "exact": true,
+      "rust_status": 0,
+      "upstream_status": 0,
+      "diff": "",
+      "rust_stderr": "",
+      "upstream_stderr": ""
+    },
+    {
+      "name": "panel expanded",
+      "args": [
+        "-p",
+        "Hello",
+        "-a",
+        "heavy",
+        "-w",
+        "24",
+        "--title",
+        "Title",
+        "--caption",
+        "Foot"
+      ],
+      "input": "",
+      "exact": true,
+      "rust_status": 0,
+      "upstream_status": 0,
+      "diff": "",
+      "rust_stderr": "",
+      "upstream_stderr": ""
+    },
+    {
+      "name": "padding",
+      "args": [
+        "-p",
+        "Hello",
+        "-d",
+        "1,2"
+      ],
+      "input": "",
+      "exact": true,
+      "rust_status": 0,
+      "upstream_status": 0,
+      "diff": "",
+      "rust_stderr": "",
+      "upstream_stderr": ""
+    },
+    {
+      "name": "syntax",
+      "args": [
+        "-",
+        "-x",
+        "python"
+      ],
+      "input": "x = 1\nprint(x)\n",
+      "exact": true,
+      "rust_status": 0,
+      "upstream_status": 0,
+      "diff": "",
+      "rust_stderr": "",
+      "upstream_stderr": ""
+    },
+    {
+      "name": "syntax head",
+      "args": [
+        "-",
+        "-x",
+        "python",
+        "-h",
+        "1"
+      ],
+      "input": "x = 1\nprint(x)\n",
+      "exact": true,
+      "rust_status": 0,
+      "upstream_status": 0,
+      "diff": "",
+      "rust_stderr": "",
+      "upstream_stderr": ""
+    },
+    {
+      "name": "syntax tail",
+      "args": [
+        "-",
+        "-x",
+        "python",
+        "-t",
+        "1"
+      ],
+      "input": "x = 1\nprint(x)\n",
+      "exact": false,
+      "rust_status": 0,
+      "upstream_status": 0,
+      "diff": "--- upstream\n+++ rust\n@@ -1 +1 @@\n-\n+print(x)\n",
+      "rust_stderr": "",
+      "upstream_stderr": ""
+    },
+    {
+      "name": "syntax numbers",
+      "args": [
+        "-",
+        "-x",
+        "python",
+        "-n"
+      ],
+      "input": "x = 1\nprint(x)\n",
+      "exact": true,
+      "rust_status": 0,
+      "upstream_status": 0,
+      "diff": "",
+      "rust_stderr": "",
+      "upstream_stderr": ""
+    },
+    {
+      "name": "json",
+      "args": [
+        "-",
+        "--json"
+      ],
+      "input": "{\"z\":1,\"a\":[true,null]}",
+      "exact": true,
+      "rust_status": 0,
+      "upstream_status": 0,
+      "diff": "",
+      "rust_stderr": "",
+      "upstream_stderr": ""
+    },
+    {
+      "name": "csv",
+      "args": [
+        "-",
+        "--csv"
+      ],
+      "input": "name,score\nAlice,10\nBob,20\n",
+      "exact": true,
+      "rust_status": 0,
+      "upstream_status": 0,
+      "diff": "",
+      "rust_stderr": "",
+      "upstream_stderr": ""
+    },
+    {
+      "name": "csv no header",
+      "args": [
+        "-",
+        "--csv"
+      ],
+      "input": "1,2\n3,4\n",
+      "exact": true,
+      "rust_status": 0,
+      "upstream_status": 0,
+      "diff": "",
+      "rust_stderr": "",
+      "upstream_stderr": ""
+    },
+    {
+      "name": "markdown",
+      "args": [
+        "-",
+        "-m"
+      ],
+      "input": "# Title\n\nHello **world**.\n\n- First\n- Second\n",
+      "exact": true,
+      "rust_status": 0,
+      "upstream_status": 0,
+      "diff": "",
+      "rust_stderr": "",
+      "upstream_stderr": ""
+    },
+    {
+      "name": "rst",
+      "args": [
+        "-",
+        "--rst"
+      ],
+      "input": "Title\n=====\n\nHello world.\n",
+      "exact": true,
+      "rust_status": 0,
+      "upstream_status": 0,
+      "diff": "",
+      "rust_stderr": "",
+      "upstream_stderr": ""
+    }
+  ],
+  "benchmarks": [
+    {
+      "upstream": {
+        "median_ms": 107.335208,
+        "samples_ms": [
+          110.602791,
+          111.899208,
+          106.292084,
+          110.387292,
+          107.335208,
+          106.262958,
+          105.388208,
+          106.729459,
+          114.148291,
+          112.78325,
+          105.168208,
+          108.270167,
+          109.3435,
+          105.609459,
+          105.3595
+        ]
+      },
+      "rust": {
+        "median_ms": 5.468542,
+        "samples_ms": [
+          5.490417,
+          5.837708,
+          5.50175,
+          4.678458,
+          4.813375,
+          5.644334,
+          5.331084,
+          5.185125,
+          5.61175,
+          5.505708,
+          5.526334,
+          4.826708,
+          5.468542,
+          4.919167,
+          5.276416
+        ]
+      },
+      "name": "markup",
+      "args": [
+        "-p",
+        "Hello [bold red]world[/]!"
+      ],
+      "input_bytes": 0,
+      "runs": 15,
+      "speedup": 19.627755990536414
+    },
+    {
+      "upstream": {
+        "median_ms": 133.331708,
+        "samples_ms": [
+          128.306834,
+          134.894917,
+          127.499791,
+          133.331708,
+          132.10975,
+          139.067208,
+          145.584959,
+          134.413708,
+          132.633333,
+          132.684042,
+          129.198375,
+          134.610666,
+          128.070542,
+          137.399459,
+          137.454208
+        ]
+      },
+      "rust": {
+        "median_ms": 9.558583,
+        "samples_ms": [
+          9.873959,
+          9.836166,
+          9.284625,
+          9.097959,
+          9.087875,
+          9.252458,
+          9.509167,
+          9.483417,
+          9.5975,
+          9.764125,
+          9.467041,
+          9.93425,
+          11.760375,
+          9.558583,
+          9.915833
+        ]
+      },
+      "name": "syntax",
+      "args": [
+        "-",
+        "-x",
+        "python"
+      ],
+      "input_bytes": 15,
+      "runs": 15,
+      "speedup": 13.948898911062443
+    },
+    {
+      "upstream": {
+        "median_ms": 106.332209,
+        "samples_ms": [
+          106.855583,
+          101.788167,
+          105.647375,
+          107.77325,
+          106.000459,
+          111.856792,
+          107.265625,
+          105.368083,
+          104.332834,
+          103.259292,
+          106.332209,
+          107.741958,
+          119.754084,
+          111.9375,
+          103.573417
+        ]
+      },
+      "rust": {
+        "median_ms": 7.181,
+        "samples_ms": [
+          7.246291,
+          6.731375,
+          6.954541,
+          6.707542,
+          10.935917,
+          7.263708,
+          6.639625,
+          6.78725,
+          7.181,
+          7.535042,
+          7.270708,
+          6.951916,
+          6.757125,
+          10.025,
+          7.441042
+        ]
+      },
+      "name": "json",
+      "args": [
+        "-",
+        "--json"
+      ],
+      "input_bytes": 23,
+      "runs": 15,
+      "speedup": 14.807437543517617
+    },
+    {
+      "upstream": {
+        "median_ms": 1136.486041,
+        "samples_ms": [
+          1124.506625,
+          1126.108,
+          1119.38575,
+          1163.048791,
+          1118.415916,
+          1127.769083,
+          1136.486041,
+          1156.041375,
+          1139.770667,
+          1146.772792,
+          1149.115625,
+          1149.913458,
+          1159.984125,
+          1100.85875,
+          1113.65475
+        ]
+      },
+      "rust": {
+        "median_ms": 245.113125,
+        "samples_ms": [
+          246.601375,
+          251.860416,
+          249.565459,
+          249.464292,
+          245.113125,
+          238.800375,
+          239.330333,
+          240.672292,
+          242.863958,
+          244.274625,
+          241.636625,
+          244.245916,
+          264.036625,
+          311.290917,
+          258.674709
+        ]
+      },
+      "name": "source 5000 lines",
+      "args": [
+        "-",
+        "-x",
+        "python"
+      ],
+      "input_bytes": 152780,
+      "runs": 15,
+      "speedup": 4.636577665924662
+    },
+    {
+      "upstream": {
+        "median_ms": 260.134541,
+        "samples_ms": [
+          259.121875,
+          264.193916,
+          256.485875,
+          259.631125,
+          256.194833,
+          258.733083,
+          260.134541,
+          261.499208,
+          264.939292,
+          268.520042,
+          262.546875,
+          260.158625,
+          264.346,
+          259.710125,
+          259.562042
+        ]
+      },
+      "rust": {
+        "median_ms": 49.124417,
+        "samples_ms": [
+          49.787416,
+          49.124417,
+          50.773292,
+          50.1585,
+          49.612458,
+          48.486041,
+          47.9075,
+          48.043333,
+          48.735125,
+          50.516916,
+          51.95425,
+          49.582875,
+          48.288916,
+          48.390708,
+          48.635875
+        ]
+      },
+      "name": "json 1000 records",
+      "args": [
+        "-",
+        "--json"
+      ],
+      "input_bytes": 48780,
+      "runs": 15,
+      "speedup": 5.2954224576344595
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+richrs is an independent Rust implementation of the command-line interface
+provided by Textualize/rich-cli. It is not affiliated with Textualize.
+Compatibility reference: rich-cli 1.8.0; source revision
+46f4d2469097be395558768714a5f07ebccf1412 (main, retrieved 2026-10-15).
+Upstream source: https://github.com/Textualize/rich-cli
+Upstream license: MIT, Copyright (c) 2022 Will McGugan.
+The upstream license text is retained in docs/UPSTREAM-LICENSE.
+Rust dependency licenses are declared by their respective packages.
+
+assets/colors.json and assets/emoji.json are derived from Rich 12.6.0
+(MIT, Copyright (c) 2020 Will McGugan); see docs/RICH-LICENSE.
+The import script is development tooling only.
+
+assets/themes/*.tmTheme use palettes derived from Pygments 2.21.0.
+Pygments is Copyright (c) 2006-present the Pygments team and contributors,
+licensed under BSD-2-Clause; see docs/PYGMENTS-LICENSE.
+Token-to-scope mapping is specific to this project.
