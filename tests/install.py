@@ -23,6 +23,7 @@ class InstallTests(unittest.TestCase):
         self.bin.mkdir()
         self.destination = self.root / 'install with spaces'
         self.target = 'aarch64-apple-darwin'
+        self.completion_dir = self.root / 'completion files'
         for target in ['aarch64-apple-darwin','x86_64-apple-darwin',
                        'aarch64-unknown-linux-musl','x86_64-unknown-linux-musl']:
             path = self.assets / f'richrs-v0.1.0-{target}.tar.gz'
@@ -32,6 +33,12 @@ class InstallTests(unittest.TestCase):
                 entry.mode = 0o755
                 entry.size = len(content)
                 archive.addfile(entry, io.BytesIO(content))
+                for shell, filename in [('bash','rich.bash'),('zsh','rich.zsh'),('fish','rich.fish')]:
+                    completion=f'# richrs {shell} completion\n'.encode()
+                    entry=tarfile.TarInfo(f'completions/{filename}')
+                    entry.mode=0o644
+                    entry.size=len(completion)
+                    archive.addfile(entry,io.BytesIO(completion))
         self.generate()
         self.tool('uname', '#!/bin/sh\ncase "$1" in -s) echo "${TEST_OS:-Darwin}";; -m) echo "${TEST_ARCH:-arm64}";; esac\n')
         self.tool('curl', '''#!/bin/sh
@@ -49,7 +56,8 @@ case "$url" in */latest) printf 'https://github.com/example/richrs/releases/tag/
 ''')
         self.env = dict(os.environ, PATH=f'{self.bin}{os.pathsep}{os.environ["PATH"]}',
                         TEST_ASSETS=str(self.assets), RICHRS_REPOSITORY='example/richrs',
-                        RICHRS_VERSION='v0.1.0', RICHRS_INSTALL_DIR=str(self.destination))
+                        RICHRS_VERSION='v0.1.0', RICHRS_INSTALL_DIR=str(self.destination),
+                        RICHRS_COMPLETION_DIR=str(self.completion_dir), RICHRS_COMPLETION_SHELL='fish')
     def tool(self, name, content):
         path = self.bin / name
         path.write_text(content)
@@ -67,11 +75,20 @@ case "$url" in */latest) printf 'https://github.com/example/richrs/releases/tag/
                 run=self.run_install('--force')
                 self.assertEqual(run.returncode,0,run.stderr)
                 self.assertEqual(subprocess.check_output([str(self.destination/'rich')],text=True),'Hello\n')
+                self.assertTrue((self.completion_dir/'rich.fish').is_file())
     def test_existing_binary_preserved(self):
         self.destination.mkdir()
         (self.destination/'rich').write_text('old')
         self.assertNotEqual(self.run_install().returncode,0)
         self.assertEqual((self.destination/'rich').read_text(),'old')
+    def test_existing_completion_preserved(self):
+        self.completion_dir.mkdir()
+        completion=self.completion_dir/'rich.fish'
+        completion.write_text('user completion')
+        run=self.run_install()
+        self.assertNotEqual(run.returncode,0)
+        self.assertEqual(completion.read_text(),'user completion')
+        self.assertFalse((self.destination/'rich').exists())
     def test_checksum_failure_preserves_destination(self):
         path=self.assets/f'richrs-v0.1.0-{self.target}.tar.gz'
         path.write_bytes(path.read_bytes()+b'tampered')

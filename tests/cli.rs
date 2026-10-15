@@ -248,3 +248,46 @@ fn format_flag_precedence_matches_upstream() {
     assert_eq!(output(&["-", "--syntax", "--rule"], "hello"), "hello\n");
     assert!(output(&["-", "--json", "--csv"], "{\"ok\":true}").contains("\"ok\""));
 }
+
+#[test]
+fn generated_shell_completions_include_paths_and_options() {
+    for shell in ["bash", "zsh", "fish"] {
+        let out = Command::new(env!("CARGO_BIN_EXE_rich"))
+            .args(["--generate-completions", shell])
+            .output()
+            .unwrap();
+        assert!(out.status.success());
+        let text = String::from_utf8(out.stdout).unwrap();
+        assert!(match shell {
+            "fish" => text.contains("-l export-html"),
+            _ => text.contains("--export-html"),
+        });
+        assert!(match shell {
+            "bash" => text.contains("compgen -f"),
+            "zsh" => text.contains("_files"),
+            _ => text.contains("complete -c rich"),
+        });
+    }
+}
+#[test]
+fn streaming_and_retained_source_renderers_match() {
+    let p = temp("rs");
+    std::fs::write(&p, "fn main() {\n    println!(\"héllo\");\n    let long_line = \"this line is deliberately longer than the chosen width\";\n}\n").unwrap();
+    let export = temp("svg");
+    for flags in [
+        vec!["--syntax"],
+        vec!["--syntax", "--no-wrap"],
+        vec!["--syntax", "--head", "2"],
+        vec!["--syntax", "--tail", "2"],
+        vec!["--syntax", "--tail", "1", "--width", "8"],
+        vec!["--syntax", "--guides"],
+    ] {
+        let mut fast = vec![p.to_str().unwrap()];
+        fast.extend(flags.iter().copied());
+        let mut retained = fast.clone();
+        retained.extend(["--export-svg", export.to_str().unwrap()]);
+        assert_eq!(output(&fast, ""), output(&retained, ""), "flags {flags:?}");
+    }
+    let _ = std::fs::remove_file(p);
+    let _ = std::fs::remove_file(export);
+}

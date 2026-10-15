@@ -1,7 +1,7 @@
 # Releasing richrs
 
-No remote, public release or Homebrew tap is configured by this checkout.
-The release workflow creates a **draft**; publication remains a separate action.
+The configured GitHub remote has no release or Homebrew tap verified from this
+checkout. The release workflow creates a **draft**; publication remains a separate action.
 
 1. Review `COMPATIBILITY.md`, especially limitations that block a drop-in claim.
 2. Run formatting, Clippy, Rust tests, `tests/install.py`, and `tests/system.py`.
@@ -12,7 +12,8 @@ The release workflow creates a **draft**; publication remains a separate action.
 5. The release jobs test/build natively on Apple Silicon, Intel macOS, x86-64 Linux
    and ARM64 Linux. Linux uses musl. Both Oniguruma and ring build native code;
    inspect dynamic dependencies of the artifacts before claiming portability.
-6. Successful jobs upload four archives. The publish job generates `SHA256SUMS`
+6. Each archive contains Bash, Zsh, and Fish completion scripts. Successful jobs
+   upload four archives. The publish job generates `SHA256SUMS`
    and `richrs.rb` from their bytes and creates a draft GitHub release containing
    those files, the archives, and `install.sh`.
 7. Download the draft assets, verify checksums and smoke-test on each supported

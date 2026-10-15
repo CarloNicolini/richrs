@@ -1,5 +1,9 @@
 use crate::{cli::Args, layout, text::*};
-use std::sync::LazyLock;
+use std::{
+    collections::VecDeque,
+    io::{BufRead, Write},
+    sync::LazyLock,
+};
 use syntect::{
     easy::HighlightLines,
     highlighting::{FontStyle, ThemeSet},
@@ -26,6 +30,159 @@ static THEMES: LazyLock<ThemeSet> = LazyLock::new(|| {
     }
     themes
 });
+
+/// Render source with memory bounded by the current line (or the requested tail).
+/// This is used for plain files and stdin when post-processing does not require
+/// retaining a full render tree.
+pub fn syntax_stream<R: BufRead, W: Write>(
+    mut reader: R,
+    mut writer: W,
+    path: &str,
+    lexer: Option<&str>,
+    args: &Args,
+    limit: usize,
+    color: bool,
+) -> Result<(), String> {
+    let name = lexer.map(|x| match x {
+        "py" => "python",
+        "js" => "javascript",
+        "sh" | "bash" => "shell-unix-generic",
+        "text" | "txt" => "Plain Text",
+        _ => x,
+    });
+    let syntax = if let Some(name) = name {
+        SYNTAXES
+            .find_syntax_by_token(name)
+            .or_else(|| {
+                SYNTAXES
+                    .syntaxes()
+                    .iter()
+                    .find(|s| s.name.eq_ignore_ascii_case(name))
+            })
+            .ok_or_else(|| format!("unknown lexer: {name}"))?
+    } else {
+        let path = path.split(['?', '#']).next().unwrap_or(path);
+        std::path::Path::new(path)
+            .extension()
+            .and_then(|s| s.to_str())
+            .and_then(|s| SYNTAXES.find_syntax_by_extension(s))
+            .unwrap_or_else(|| SYNTAXES.find_syntax_plain_text())
+    };
+    let theme_name = match args.theme.as_str() {
+        "ansi_dark" => "base16-ocean.dark",
+        "ansi_light" => "InspiredGitHub",
+        "solarized-dark" => "Solarized (dark)",
+        "solarized-light" => "Solarized (light)",
+        other => other,
+    };
+    let theme = THEMES
+        .themes
+        .get(theme_name)
+        .ok_or_else(|| format!("unknown syntax theme: {}", args.theme))?;
+    let mut highlighter = HighlightLines::new(syntax, theme);
+    let mut bytes = Vec::with_capacity(8192);
+    let mut line_number = 0usize;
+    let mut tail: VecDeque<Vec<Line>> = VecDeque::new();
+    let mut wrote = false;
+    let mut trailing_newline = false;
+    loop {
+        bytes.clear();
+        let count = reader
+            .read_until(b'\n', &mut bytes)
+            .map_err(|e| format!("unable to read source: {e}"))?;
+        if count == 0 {
+            break;
+        }
+        line_number += 1;
+        trailing_newline = bytes.last() == Some(&b'\n');
+        let raw = String::from_utf8_lossy(&bytes);
+        let ranges = highlighter
+            .highlight_line(&raw, &SYNTAXES)
+            .map_err(|e| e.to_string())?;
+        let mut cells = Vec::with_capacity(raw.len());
+        for (style, text) in ranges {
+            let style = Style {
+                fg: Some((style.foreground.r, style.foreground.g, style.foreground.b)),
+                bg: if args.theme.starts_with("ansi_") {
+                    None
+                } else {
+                    Some((style.background.r, style.background.g, style.background.b))
+                },
+                bold: style.font_style.contains(FontStyle::BOLD),
+                italic: style.font_style.contains(FontStyle::ITALIC),
+                underline: style.font_style.contains(FontStyle::UNDERLINE),
+                ..Style::default()
+            };
+            for ch in text.trim_end_matches(['\n', '\r']).chars() {
+                if ch == '\t' {
+                    cells.extend(styled(&" ".repeat(4 - width(&cells) % 4), &style));
+                } else if !ch.is_control() {
+                    cells.push(Cell {
+                        ch,
+                        style: style.clone(),
+                    });
+                }
+            }
+        }
+        if args.guides {
+            let leading = cells.iter().take_while(|c| c.ch == ' ').count();
+            for n in (0..leading).step_by(4) {
+                cells[n].ch = '│';
+                cells[n].style = Style::parse("dim").unwrap();
+            }
+        }
+        let mut rendered = vec![];
+        if args.soft || args.no_wrap {
+            rendered.push(if args.no_wrap {
+                truncate(&cells, limit)
+            } else {
+                cells
+            });
+        } else {
+            rendered = wrap(&cells, limit, false);
+        }
+        if let Some(count) = args.head {
+            if line_number > count {
+                break;
+            }
+            for line in rendered {
+                write_line(&mut writer, line, color)?;
+                wrote = true;
+            }
+        } else if let Some(count) = args.tail {
+            tail.push_back(rendered);
+            while tail.len() > count {
+                tail.pop_front();
+            }
+        } else {
+            for line in rendered {
+                write_line(&mut writer, line, color)?;
+                wrote = true;
+            }
+        }
+    }
+    if args.tail.is_none() && trailing_newline && args.head.is_none_or(|n| n > line_number) {
+        write_line(&mut writer, vec![], color)?;
+        wrote = true;
+    }
+    if args.tail.is_some() {
+        for source_line in tail {
+            for line in source_line {
+                write_line(&mut writer, line, color)?;
+                wrote = true;
+            }
+        }
+    }
+    if !wrote {
+        writer.write_all(b"\n").map_err(|e| e.to_string())?;
+    }
+    writer.flush().map_err(|e| e.to_string())
+}
+fn write_line<W: Write>(writer: &mut W, line: Line, color: bool) -> Result<(), String> {
+    writer
+        .write_all(ansi_string(&vec![line], color, false).as_bytes())
+        .map_err(|e| e.to_string())
+}
 
 pub fn syntax(
     data: &str,
@@ -195,8 +352,9 @@ pub fn csv(data: &str, path: &str, args: &Args, limit: usize) -> Result<Document
     } else {
         // Score parsed records rather than raw delimiter counts, so quoted
         // commas inside semicolon- or tab-separated fields do not confuse detection.
-        [b',', b'\t', b';', b'|']
-            .into_iter()
+        b",\t;|"
+            .iter()
+            .copied()
             .enumerate()
             .max_by_key(|(preference, delimiter)| {
                 let mut reader = csv::ReaderBuilder::new()

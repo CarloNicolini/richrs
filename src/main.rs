@@ -6,7 +6,7 @@ mod pager;
 mod render;
 mod text;
 
-use clap::Parser;
+use clap::{CommandFactory, Parser};
 use cli::Args;
 use std::{
     io::{self, IsTerminal, Read, Write},
@@ -48,6 +48,10 @@ fn read_resource(path: &str) -> Result<(String, Option<String>), String> {
     Ok((String::from_utf8_lossy(&bytes).into_owned(), None))
 }
 fn run(args: Args) -> Result<(), String> {
+    if let Some(shell) = args.generate_completions {
+        clap_complete::generate(shell, &mut Args::command(), "rich", &mut io::stdout());
+        return Ok(());
+    }
     if args.resource.is_empty() && !args.print && !args.rule {
         Args::parse_from(["rich", "--help"]);
         return Ok(());
@@ -100,6 +104,73 @@ fn run(args: Args) -> Result<(), String> {
     let inner = outer
         .saturating_sub(padding[1] + padding[3] + if args.panel != "none" { 4 } else { 0 })
         .max(1);
+    let path = args
+        .resource
+        .split(['?', '#'])
+        .next()
+        .unwrap_or(&args.resource);
+    let extension = std::path::Path::new(path)
+        .extension()
+        .and_then(|s| s.to_str())
+        .unwrap_or("")
+        .to_ascii_lowercase();
+    let auto_syntax = selected == "auto"
+        && !matches!(
+            extension.as_str(),
+            "md" | "json" | "csv" | "tsv" | "rst" | "ipynb"
+        );
+    let simple_source = matches!(selected, "syntax") || auto_syntax;
+    let can_stream = simple_source
+        && !args.resource.starts_with("http://")
+        && !args.resource.starts_with("https://")
+        && !args.line_numbers
+        && args.style.is_empty()
+        && args.panel == "none"
+        && padding == [0; 4]
+        && args.export_html.is_none()
+        && args.export_svg.is_none()
+        && !args.pager
+        && !args.left
+        && !args.right
+        && !args.center;
+    if can_stream {
+        let color = args.force_terminal
+            || (io::stdout().is_terminal()
+                && std::env::var_os("NO_COLOR").is_none_or(|s| s.is_empty())
+                && !std::env::var("TERM").is_ok_and(|s| s == "dumb"));
+        let stdout = io::stdout();
+        let mut writer = io::BufWriter::new(stdout.lock());
+        let result = if args.resource == "-" {
+            render::syntax_stream(
+                io::BufReader::new(io::stdin().lock()),
+                &mut writer,
+                "",
+                args.lexer.as_deref(),
+                &args,
+                inner,
+                color,
+            )
+        } else {
+            let file = std::fs::File::open(&args.resource)
+                .map_err(|e| format!("unable to read {}: {e}", args.resource))?;
+            render::syntax_stream(
+                io::BufReader::new(file),
+                &mut writer,
+                path,
+                args.lexer.as_deref(),
+                &args,
+                inner,
+                color,
+            )
+        };
+        if let Err(error) = result {
+            if error.contains("Broken pipe") {
+                return Ok(());
+            }
+            return Err(error);
+        }
+        return Ok(());
+    }
     let mut doc = if matches!(selected, "print" | "rule") {
         let resource = if args.resource == "-" {
             read_resource("-")?.0
@@ -160,18 +231,8 @@ fn run(args: Args) -> Result<(), String> {
         }
     } else {
         let (data, mime) = read_resource(&args.resource)?;
-        let path = args
-            .resource
-            .split(['?', '#'])
-            .next()
-            .unwrap_or(&args.resource);
-        let ext = std::path::Path::new(path)
-            .extension()
-            .and_then(|s| s.to_str())
-            .unwrap_or("")
-            .to_ascii_lowercase();
         let format = if selected == "auto" {
-            ext.as_str()
+            extension.as_str()
         } else {
             selected
         };
@@ -261,21 +322,20 @@ fn run(args: Args) -> Result<(), String> {
             .stdin(Stdio::piped())
             .spawn()
             .map_err(|e| format!("unable to start pager '{}': {e}", words[0]))?;
-        if let Some(mut stdin) = child.stdin.take() {
-            if let Err(e) = stdin.write_all(output.as_bytes()) {
-                if e.kind() != io::ErrorKind::BrokenPipe {
-                    return Err(e.to_string());
-                }
-            }
+        if let Some(mut stdin) = child.stdin.take()
+            && let Err(e) = stdin.write_all(output.as_bytes())
+            && e.kind() != io::ErrorKind::BrokenPipe
+        {
+            return Err(e.to_string());
         }
         let status = child.wait().map_err(|e| e.to_string())?;
         if !status.success() {
             return Err(format!("pager exited with {status}"));
         }
-    } else if let Err(e) = io::stdout().lock().write_all(output.as_bytes()) {
-        if e.kind() != io::ErrorKind::BrokenPipe {
-            return Err(e.to_string());
-        }
+    } else if let Err(e) = io::stdout().lock().write_all(output.as_bytes())
+        && e.kind() != io::ErrorKind::BrokenPipe
+    {
+        return Err(e.to_string());
     }
     Ok(())
 }

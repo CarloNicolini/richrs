@@ -67,9 +67,9 @@ shell evaluation. When stdout is redirected, `--pager` prints normally.
 
 ## macOS and Linux installation from releases
 
-Release infrastructure is included, but **this checkout has no configured remote
-or published release**. The commands below become usable after publishing to your
-chosen GitHub repository. `OWNER/REPOSITORY` is a value you must replace.
+Release infrastructure is included, but **no public release has been verified yet**.
+The commands below become usable after publishing the first release. Replace
+`OWNER/REPOSITORY` with the GitHub repository that hosts it.
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/OWNER/REPOSITORY/main/install.sh \
@@ -80,6 +80,11 @@ The installer defaults to `$HOME/.local/bin`. It selects an Apple Silicon or Int
 macOS binary, or an ARM64/x86-64 Linux musl binary, and verifies its SHA-256 against
 the release's `SHA256SUMS` before extraction. It refuses to replace an existing
 executable unless `--force` is supplied. It does not need sudo or modify shell files.
+The archive includes Bash, Zsh, and Fish completions. The installer places them in
+the standard user completion directory; use `RICHRS_COMPLETION_DIR` to choose a
+different location. You can also generate a completion file directly with
+`rich --generate-completions bash` (or `zsh` / `fish`). Filename completion uses
+each shell's native file completion behavior.
 Pin a release or change the destination with environment variables:
 
 ```sh
@@ -107,6 +112,7 @@ cargo clippy --locked --all-targets -- -D warnings
 cargo test --locked
 python3 tests/install.py
 python3 tests/system.py
+python3 tests/stress.py --mib 32
 ```
 
 The system tests need permission to open a loopback socket and a pseudo-terminal.
@@ -125,11 +131,11 @@ python3 scripts/compare-upstream.py --reference /tmp/richrs-reference/bin/rich -
 
 [The checked verification report](docs/verification.json) records exact-output
 comparisons, mismatches, benchmark samples, and the host. [Local validation](docs/VALIDATION.md)
-summarizes 39 passing automated tests and benchmarks. On this Apple Silicon host,
-small inputs measured about 14–20× faster, a 5,000-line source fixture 4.6× faster,
-and a 1,000-record JSON fixture 5.3× faster than the Python reference. Benchmarks
-measure whole processes after warmups and do not establish speedups for all files,
-exports, or formats. Python is
+summarizes automated tests, large-file memory checks, and benchmarks. Source files
+and stdin use a streaming syntax renderer; `--tail` retains only the requested
+source lines. The 32 MiB stress fixture used under 9 MiB peak resident memory on
+the local Apple Silicon run. Benchmarks measure whole processes after warmups and
+do not establish speedups for all files, exports, or formats. Python is
 used only for development checks and importing bundled data, not by the utility.
 
 ## License and attribution

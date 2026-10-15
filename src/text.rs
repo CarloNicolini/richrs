@@ -207,11 +207,11 @@ fn color(name: &str) -> Option<(u8, u8, u8)> {
         "purple" => 129,
         "pink1" | "pink" => 218,
         _ => {
-            if let Some(hex) = name.strip_prefix('#') {
-                if hex.len() == 6 {
-                    let v = u32::from_str_radix(hex, 16).ok()?;
-                    return Some(((v >> 16) as u8, (v >> 8) as u8, v as u8));
-                }
+            if let Some(hex) = name.strip_prefix('#')
+                && hex.len() == 6
+            {
+                let v = u32::from_str_radix(hex, 16).ok()?;
+                return Some(((v >> 16) as u8, (v >> 8) as u8, v as u8));
             }
             if let Some(rgb) = name.strip_prefix("rgb(").and_then(|s| s.strip_suffix(')')) {
                 let v = rgb
@@ -340,10 +340,8 @@ pub fn ansi_string(doc: &Document, color: bool, links: bool) -> String {
                     s += "\x1b[0m";
                 }
                 s += &cell.style.ansi();
-                if links {
-                    if let Some(link) = &cell.style.link {
-                        s += &format!("\x1b]8;;{}\x1b\\", safe_url(link));
-                    }
+                if links && let Some(link) = &cell.style.link {
+                    s += &format!("\x1b]8;;{}\x1b\\", safe_url(link));
                 }
                 current = cell.style.clone();
             }
@@ -378,12 +376,12 @@ pub fn markup(input: &str, emoji: bool) -> Result<Document, String> {
         while let Some(start) = rest.find(':') {
             out += &rest[..start];
             rest = &rest[start + 1..];
-            if let Some(end) = rest.find(':') {
-                if let Some(e) = EMOJI.get(&rest[..end]) {
-                    out += e.as_str();
-                    rest = &rest[end + 1..];
-                    continue;
-                }
+            if let Some(end) = rest.find(':')
+                && let Some(e) = EMOJI.get(&rest[..end])
+            {
+                out += e.as_str();
+                rest = &rest[end + 1..];
+                continue;
             }
             out.push(':');
         }
@@ -402,40 +400,39 @@ pub fn markup(input: &str, emoji: bool) -> Result<Document, String> {
             i += 2;
             continue;
         }
-        if chars[i] == '[' {
-            if let Some(end) = chars[i + 1..]
+        if chars[i] == '['
+            && let Some(end) = chars[i + 1..]
                 .iter()
                 .position(|c| *c == ']')
                 .map(|n| n + i + 1)
-            {
-                let tag: String = chars[i + 1..end].iter().collect();
-                if let Some(close) = tag.strip_prefix('/') {
-                    if close.is_empty() {
-                        if stack.pop().is_none() {
-                            return Err("closing markup tag has no opening tag".into());
-                        }
-                    } else if let Some(pos) = stack.iter().rposition(|(name, _)| name == close) {
-                        stack.remove(pos);
-                    } else {
-                        return Err(format!(
-                            "closing tag [/{close}] has no matching opening tag"
-                        ));
+        {
+            let tag: String = chars[i + 1..end].iter().collect();
+            if let Some(close) = tag.strip_prefix('/') {
+                if close.is_empty() {
+                    if stack.pop().is_none() {
+                        return Err("closing markup tag has no opening tag".into());
                     }
-                    i = end + 1;
-                    continue;
-                } else if tag.starts_with(|c: char| c.is_alphabetic() || c == '#') {
-                    let parsed = if let Some(link) = tag.strip_prefix("link=") {
-                        Ok(Style {
-                            link: Some(link.into()),
-                            ..Style::default()
-                        })
-                    } else {
-                        Style::parse(&tag)
-                    };
-                    stack.push((tag, parsed?));
-                    i = end + 1;
-                    continue;
+                } else if let Some(pos) = stack.iter().rposition(|(name, _)| name == close) {
+                    stack.remove(pos);
+                } else {
+                    return Err(format!(
+                        "closing tag [/{close}] has no matching opening tag"
+                    ));
                 }
+                i = end + 1;
+                continue;
+            } else if tag.starts_with(|c: char| c.is_alphabetic() || c == '#') {
+                let parsed = if let Some(link) = tag.strip_prefix("link=") {
+                    Ok(Style {
+                        link: Some(link.into()),
+                        ..Style::default()
+                    })
+                } else {
+                    Style::parse(&tag)
+                };
+                stack.push((tag, parsed?));
+                i = end + 1;
+                continue;
             }
         }
         let ch = chars[i];
@@ -487,10 +484,12 @@ pub fn wrap(line: &Line, limit: usize, words: bool) -> Document {
                 break;
             }
         }
-        if end < groups.len() && words && !groups[end].2 {
-            if let Some((s, w)) = space.filter(|(s, _)| *s > start) {
-                end = s + usize::from(w < limit);
-            }
+        if end < groups.len()
+            && words
+            && !groups[end].2
+            && let Some((s, w)) = space.filter(|(s, _)| *s > start)
+        {
+            end = s + usize::from(w < limit);
         }
         let first = if start == 0 { 0 } else { groups[start - 1].0 };
         let last = groups[end - 1].0;

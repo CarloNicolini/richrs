@@ -3,3 +3,4 @@
 /.reference/
 *.profraw
 __pycache__/
+token.txt

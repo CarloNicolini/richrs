@@ -4,6 +4,9 @@ permissions:
   contents: read
 jobs:
   test:
+    concurrency:
+      group: ci-${{ github.workflow }}-${{ github.ref }}-${{ matrix.os }}
+      cancel-in-progress: true
     strategy:
       fail-fast: false
       matrix:
@@ -11,6 +14,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
@@ -19,10 +24,22 @@ jobs:
       - run: cargo test --locked
       - run: python3 tests/install.py
       - run: python3 tests/system.py
+      - run: python3 tests/stress.py --mib 32
       - run: cargo build --release --locked
+      - name: Generate and check shell completions
+        run: |
+          mkdir -p target/completions
+          for shell in bash zsh fish; do
+            cargo run --quiet --locked -- --generate-completions "$shell" > "target/completions/rich.$shell"
+          done
+          grep -q 'compgen -f' target/completions/rich.bash
+          grep -q '_files' target/completions/rich.zsh
+          grep -q -- '-l export-html' target/completions/rich.fish
   msrv:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: dtolnay/rust-toolchain@1.88.0
       - run: cargo check --locked

@@ -1,4 +1,4 @@
-use clap::Parser;
+use clap::{Parser, ValueHint};
 
 /// Native terminal formatting: files, URLs, stdin, and console markup.
 #[derive(Parser, Debug)]
@@ -10,7 +10,7 @@ use clap::Parser;
 )]
 pub struct Args {
     /// Path, URL, literal markup (--print/--rule), or '-' for stdin
-    #[arg(default_value = "")]
+    #[arg(default_value = "", value_hint = ValueHint::FilePath)]
     pub resource: String,
     #[arg(long, action = clap::ArgAction::Help)]
     /// Show command help.
@@ -141,6 +141,9 @@ pub struct Args {
     #[arg(long)]
     /// Open the native pager (or PAGER when set).
     pub pager: bool,
+    /// Generate shell argument completions and exit.
+    #[arg(long, value_enum, hide = true)]
+    pub generate_completions: Option<clap_complete::Shell>,
 }
 
 impl Args {
