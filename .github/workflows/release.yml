@@ -22,6 +22,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
@@ -29,23 +31,35 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y musl-tools
-          echo 'CC=musl-gcc' >> "$GITHUB_ENV"
       - name: Check release version
         env:
           TAG: ${{ github.ref_name }}
         run: python3 -c 'import os,tomllib; assert os.environ["TAG"] == "v" + tomllib.load(open("Cargo.toml","rb"))["package"]["version"]'
-      - run: cargo test --locked --target ${{ matrix.target }}
-      - run: cargo build --release --locked --target ${{ matrix.target }}
+      - run: cargo test --locked
+      - if: matrix.target == 'aarch64-apple-darwin' || matrix.target == 'x86_64-apple-darwin'
+        run: cargo build --release --locked --target ${{ matrix.target }}
+      - if: matrix.target == 'x86_64-unknown-linux-musl'
+        env:
+          CC: musl-gcc
+          CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER: musl-gcc
+        run: cargo build --release --locked --target ${{ matrix.target }}
+      - if: matrix.target == 'aarch64-unknown-linux-musl'
+        env:
+          CC: musl-gcc
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER: musl-gcc
+        run: cargo build --release --locked --target ${{ matrix.target }}
       - name: Archive executable
         env:
           TAG: ${{ github.ref_name }}
           TARGET: ${{ matrix.target }}
         run: |
-          mkdir -p dist stage
+          mkdir -p dist stage/completions stage/docs
+          cargo run --quiet --locked -- --generate-completions bash > stage/completions/rich.bash
+          cargo run --quiet --locked -- --generate-completions zsh > stage/completions/rich.zsh
+          cargo run --quiet --locked -- --generate-completions fish > stage/completions/rich.fish
           cp "target/$TARGET/release/rich" LICENSE NOTICE stage/
-          mkdir -p stage/docs
           cp docs/UPSTREAM-LICENSE docs/RICH-LICENSE docs/PYGMENTS-LICENSE stage/docs/
-          tar -czf "dist/richrs-$TAG-$TARGET.tar.gz" -C stage rich LICENSE NOTICE docs
+          tar -czf "dist/richrs-$TAG-$TARGET.tar.gz" -C stage rich LICENSE NOTICE docs completions
       - uses: actions/upload-artifact@v4
         with:
           name: richrs-${{ matrix.target }}
@@ -58,6 +72,8 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/download-artifact@v4
         with:
           path: dist

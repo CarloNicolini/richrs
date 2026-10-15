@@ -12,10 +12,11 @@ compatibility with arbitrary Rich renderables or all option combinations.
 
 | Interface | Status and boundaries |
 | --- | --- |
-| Local files, `-` stdin | Implemented; lossy UTF-8 for files. Stdin currently requires valid UTF-8. |
+| Local files, `-` stdin | Implemented; syntax sources decode invalid UTF-8 lossily. Other stdin formats currently require valid UTF-8. |
 | HTTP/HTTPS | Rust HTTP/TLS client, redirects, MIME hint, 30 s global timeout, 64 MiB response limit; failed HTTP status is an error. |
 | Format autodetection | `.md`, `.json`, `.csv`, `.tsv`, `.rst`, `.ipynb`; URL query strings ignored. Other paths use syntax highlighting. |
 | `--syntax`, `-x/--lexer` | Syntect's bundled TextMate grammars, with common aliases. Not all Pygments lexers; unknown explicit lexer is an error. |
+| Large syntax sources | Local source files and stdin stream line-by-line; `--tail` retains only the requested source lines. Panels, line numbers, exports, alignment, remote URLs and structured formats use the full render path. |
 | `--theme`, `RICH_THEME` | Syntect themes plus bundled Monokai, Dracula, default and friendly palettes; ansi_dark/ansi_light and solarized aliases. Scope mapping and colors differ from Pygments, including ansi_dark. Unknown themes are errors. |
 | `-n/--line-numbers`, `-g/--guides` | Implemented; number gutter and four-column indentation guides. |
 | `-h/--head`, `-t/--tail` | Positive line/row counts; mutually exclusive. Syntax and CSV, and code cells in notebooks. Tail intentionally selects the last actual lines rather than upstream's off-by-one selection. |
@@ -40,6 +41,7 @@ compatibility with arbitrary Rich renderables or all option combinations.
 | `-o/--export-html`, `--export-svg` | Escaped standalone exports preserving rendered colors and styles independently of stdout color. Templates, fonts, SVG geometry, and link representation differ from Rich. |
 | `--pager` | Native Rust pager: scrolling, page navigation, home/end, mouse wheel, resize redraw, status/scrollbar. Optional PAGER program override, nonterminal fallback. No drag scrollbar or reflow on resize. |
 | `--help`, `-v/--version` | Clap help and project version; help layout and branding differ. `-h` remains head. |
+| Shell completion | Bash, Zsh and Fish scripts are generated with `--generate-completions`; local resource arguments advertise file-path completion. Release archives and installers include them. |
 | Errors and exit codes | Clap errors exit 2; runtime errors exit 1, stderr diagnostics. Upstream often exits 255. Broken pipes exit successfully for shell composition. |
 
 ## Scope of remaining work

@@ -4,11 +4,14 @@ Host: `macOS-26.5.2-arm64-arm-64bit-Mach-O`. Rust 1.88.0. Reference: rich-cli 1.
 Rich 12.6.0, Python 3.14, isolated under `/private/tmp/richrs-reference`.
 
 - Formatting check and Clippy with warnings denied: passed.
-- Rust: 8 unit tests and 20 CLI integration tests passed.
-- Offline installer/package-generator tests: 7 passed, including all four platform
+- Rust: 8 unit tests and 22 CLI integration tests passed.
+- Offline installer/package-generator tests: 8 passed, including all four platform
   selections, checksum failure, existing binary preservation and real formula hashes.
 - Local HTTP/pseudo-terminal tests: 4 passed, including redirects, HTTP errors,
   native pager exit/terminal restoration, broken pipes and color override behavior.
+- Large-file stress test: a 32 MiB Rust source file rendered with `--tail 1` using
+  5,872 KiB peak resident memory in the optimized release build. The stream path keeps only the current source
+  line and requested tail lines in memory, and buffers terminal writes.
 - Release build: passed on Apple Silicon macOS. `file` identifies a native arm64
   Mach-O executable. `otool -L` lists only system libiconv and libSystem.
 - Packaged native archive: extracted into a temporary directory and successfully
@@ -29,11 +32,11 @@ or interactive paging are timed.
 
 | Input | Python upstream | Rust | Speedup |
 | --- | ---: | ---: | ---: |
-| markup | 107.34 ms | 5.47 ms | 19.6× |
-| syntax | 133.33 ms | 9.56 ms | 13.9× |
-| json | 106.33 ms | 7.18 ms | 14.8× |
-| source 5000 lines | 1136.49 ms | 245.11 ms | 4.6× |
-| json 1000 records | 260.13 ms | 49.12 ms | 5.3× |
+| markup | 102.42 ms | 5.12 ms | 20.0× |
+| syntax | 129.01 ms | 9.37 ms | 13.8× |
+| json | 103.00 ms | 7.01 ms | 14.7× |
+| source 5000 lines | 1135.06 ms | 234.71 ms | 4.8× |
+| json 1000 records | 268.47 ms | 48.83 ms | 5.5× |
 
 The larger source fixture has 5,000 generated Python function definitions. The
 larger JSON fixture has 1,000 records. These are synthetic local measurements;
@@ -47,7 +50,9 @@ cargo build --release --locked
 python3 scripts/compare-upstream.py --reference /private/tmp/richrs-reference/bin/rich --runs 15 --large
 ```
 
-Binary SHA256: `33ecef9c235bbd279b720c63e293da59bfb901051d151675511118c34a5304ff`.
+The current local macOS archive is `dist/richrs-v0.1.0-aarch64-apple-darwin.tar.gz`;
+its checksum is recorded in `dist/SHA256SUMS`. It includes all three shell completion
+files. This is a local build artifact, not a published release.
 
 ## Unverified distribution steps
 
