@@ -1,0 +1,4 @@
+service,status,latency_ms
+api,healthy,42
+worker,healthy,87
+search,degraded,315

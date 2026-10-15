@@ -7,6 +7,8 @@ This is an actively developed compatibility project, not a complete drop-in
 replacement. Python-object inspection is unsupported; reStructuredText, syntax
 colors, and layout have known differences. See the [compatibility notes](docs/COMPATIBILITY.md).
 
+![rich rendering Markdown and CSV files directly and through stdin pipes](assets/rich-usage.gif)
+
 ## Install
 
 The `v0.1.0` cross-platform release is currently a GitHub draft. Once it is
